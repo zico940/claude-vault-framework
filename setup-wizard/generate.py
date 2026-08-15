@@ -7,7 +7,7 @@ SKILL.md가 대화형으로 진행하고, 답변을 모은 뒤 이 스크립트�
 import os
 import shutil
 
-FRAMEWORK_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+SKILL_ROOT = os.path.dirname(os.path.abspath(__file__))
 
 CORE_RULE_FILES = ("file-ops.md", "uncertainty.md", "open-questions.md", "rule-authoring.md")
 
@@ -20,7 +20,7 @@ def _write(target_dir, rel_path, content):
 
 
 def _read_template(rel_path):
-    with open(os.path.join(FRAMEWORK_ROOT, rel_path), encoding="utf-8") as f:
+    with open(os.path.join(SKILL_ROOT, rel_path), encoding="utf-8") as f:
         return f.read()
 
 
@@ -62,13 +62,14 @@ def generate_vault(target_dir, domain, constraints, domain_rows="", domain_absol
         _write(target_dir, f".claude/rules/core/{name}", content)
         created.append(f".claude/rules/core/{name}")
 
-    # 4. verify-docs 스킬 이식
-    verify_docs_src = os.path.join(FRAMEWORK_ROOT, "skills", "verify-docs")
+    # 4. verify-docs 스킬 이식 (최종 vault 안에서는 .claude/skills/verify-docs/check.py,
+    # SKILL.md 이름으로 배치한다 — 이 저장소 안의 파일명(verify_docs.py 등)과는 무관)
     verify_docs_dst = os.path.join(target_dir, ".claude", "skills", "verify-docs")
     os.makedirs(verify_docs_dst, exist_ok=True)
-    for fname in ("check.py", "SKILL.md"):
-        shutil.copy(os.path.join(verify_docs_src, fname), os.path.join(verify_docs_dst, fname))
-        created.append(f".claude/skills/verify-docs/{fname}")
+    shutil.copy(os.path.join(SKILL_ROOT, "verify_docs.py"), os.path.join(verify_docs_dst, "check.py"))
+    created.append(".claude/skills/verify-docs/check.py")
+    shutil.copy(os.path.join(SKILL_ROOT, "verify_docs_SKILL.md"), os.path.join(verify_docs_dst, "SKILL.md"))
+    created.append(".claude/skills/verify-docs/SKILL.md")
 
     # 5. tasks/questions/open-questions.md (빈 큐)
     queue = (

@@ -1,11 +1,12 @@
 ---
 name: setup-wizard
-description: 사용자가 "/setup-wizard"를 실행하거나 "vault 초기 설정", "업종 설정", "온보딩 시작"이라고 말하면 이 스킬을 사용한다. 이 플러그인을 처음 설치한 직후, 그 업종에 맞는 vault(라우터, 규칙, 폴더 구조)를 생성할 때 쓴다.
+description: 사용자가 "/setup-wizard"를 실행하거나 "vault 초기 설정", "업종 설정", "온보딩 시작"이라고 말하면 이 스킬을 사용한다. 이 스킬을 설치한 직후, 그 업종에 맞는 vault(라우터, 규칙, 폴더 구조)를 생성할 때 쓴다.
 ---
 
 # setup-wizard — 업종 전용 vault 온보딩
 
-이 스킬은 claude-vault-framework 플러그인 설치 직후 1회 실행하는 것을 전제로 한다.
+이 스킬은 claude-vault-framework를 `.claude/skills/setup-wizard`(또는
+`~/.claude/skills/setup-wizard`)에 설치한 직후 1회 실행하는 것을 전제로 한다.
 목표는 "raw/wiki 분리 + 다중 검증 + 확인 안 된 사실은 캐물어서 큐에 쌓는" 프레임워크를
 사용자의 실제 업종에 맞게 즉석에서 조립하는 것이다.
 
@@ -23,18 +24,13 @@ description: 사용자가 "/setup-wizard"를 실행하거나 "vault 초기 설�
 
 ## 실행
 
-답변을 모은 뒤, vault root(현재 작업 디렉터리)를 대상으로 스크립트를 호출한다:
-
-```bash
-python <plugin-install-path>/skills/setup-wizard/generate.py
-```
-
-이 스크립트는 CLI 인자를 직접 받지 않는다 — 에이전트가 `generate_vault()` 함수를
-아래 시그니처로 직접 호출하는 파이썬 한 줄을 실행하는 방식을 쓴다:
+답변을 모은 뒤, vault root(현재 작업 디렉터리)를 대상으로 스크립트를 호출한다.
+이 SKILL.md 파일 자신이 있는 디렉터리(= 이 스킬이 설치된 경로, 보통
+`.claude/skills/setup-wizard` 또는 `~/.claude/skills/setup-wizard`)를 `<skill-dir>`로 쓴다:
 
 ```bash
 python -c "
-import sys; sys.path.insert(0, r'<plugin-install-path>/skills/setup-wizard')
+import sys; sys.path.insert(0, r'<skill-dir>')
 from generate import generate_vault
 created = generate_vault(
     target_dir='.',
