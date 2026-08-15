@@ -1,0 +1,9 @@
+{
+  "name": "claude-vault-framework",
+  "version": "0.1.0",
+  "description": "업종 무관 지식관리 프레임워크 — Raw/Wiki 분리, 다중 검증(verify-docs), 온보딩 인터뷰(setup-wizard)",
+  "skills": [
+    "skills/setup-wizard",
+    "skills/verify-docs"
+  ]
+}

@@ -48,14 +48,9 @@ HISTORY_SECTIONS = ("## 변경 이력", "## Log")
 HANDLED = ("답변 완료", "삭제됨")
 
 # 외부(vendored) 스킬 — 이 프로젝트의 Q번호 체계와 무관한 제3자 콘텐츠다.
-# `.claude/skills/design-taste-frontend`, `.claude/skills/high-end-visual-design`는
-# `.agents/skills/`의 Windows Junction이라 같은 파일이 두 경로로 중복 스캔되는 문제도 겸해 막는다.
-# 상세: [[.claude/rules/dev/ui-design.md]]
-VENDOR_DIRS = (
-    ".agents/",
-    ".claude/skills/design-taste-frontend/",
-    ".claude/skills/high-end-visual-design/",
-)
+# `.agents/skills/`를 Windows Junction으로 `.claude/skills/`에 연결해 쓰는 경우
+# 같은 파일이 두 경로로 중복 스캔되는 문제도 겸해 막는다.
+VENDOR_DIRS = (".agents/",)
 
 
 def norm(path):
