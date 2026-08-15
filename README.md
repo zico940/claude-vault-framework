@@ -8,8 +8,11 @@ Raw/Wiki 분리, 확인되지 않은 사실은 큐에 쌓아 순서대로 캐묻
 ## 설치
 
 ```
+/plugin marketplace add zico940/claude-vault-framework
 /plugin install claude-vault-framework
 ```
+
+저장소가 private이므로, 설치하려는 사용자는 이 저장소에 GitHub 협업자로 먼저 초대되어 있어야 한다.
 
 ## 사용
 
