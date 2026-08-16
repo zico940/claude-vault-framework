@@ -1,6 +1,6 @@
 ---
 name: setup-wizard
-description: 사용자가 "/setup-wizard"를 실행하거나 "vault 초기 설정", "업종 설정", "온보딩 시작"이라고 말하면 이 스킬을 사용한다. 이 스킬을 설치한 직후, 그 업종에 맞는 vault(라우터, 규칙, 폴더 구조)를 생성할 때 쓴다.
+description: "/setup-wizard" 실행이나 "vault 초기 설정"/"업종 설정"/"온보딩 시작" 요청 시 사용. 설치 직후 그 업종에 맞는 vault(라우터, 규칙, 폴더 구조)를 생성한다.
 ---
 
 # setup-wizard — 업종 전용 vault 온보딩
