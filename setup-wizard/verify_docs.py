@@ -27,7 +27,10 @@ for _stream in (sys.stdout, sys.stderr):
 QUEUE = "tasks/questions/open-questions.md"
 RULE = ".claude/rules/core/open-questions.md"
 LOG = "log.md"
-ROUTER = ".claude/CLAUDE.md"
+# Claude Code는 .claude/CLAUDE.md, Codex는 AGENTS.md를 라우터 관례로 쓴다.
+# 어느 쪽이 실제 vault에 있는지 실행 시점에 찾는다 — 하드코딩하면 다른 쪽에서
+# 파일이 없어 check_router_duplicate가 조용히 스킵된다.
+ROUTER_CANDIDATES = (".claude/CLAUDE.md", "AGENTS.md")
 
 Q_HEADER = re.compile(r"^### (Q\d+)")
 # 뒤쪽 \b를 쓰면 안 된다: 파이썬 \b는 유니코드 기준이라 "Q99를"처럼 한글 조사가
@@ -212,9 +215,12 @@ def check_router_duplicate(root, findings):
     여기서는 그 반대 방향(중복 등재)만 기계로 잡는다 — "어느 쪽에 있어야 맞는가"는
     사람 판단 영역이라 다루지 않는다.
     """
-    path = os.path.join(root, ROUTER)
-    if not os.path.exists(path):
+    router = next(
+        (c for c in ROUTER_CANDIDATES if os.path.exists(os.path.join(root, c))), None
+    )
+    if router is None:
         return
+    path = os.path.join(root, router)
     text = read(path)
     if "## 항상 로드" not in text or "## 작업별 로드" not in text:
         return
@@ -237,7 +243,7 @@ def check_router_duplicate(root, findings):
 
     for dup in sorted(always & per_task):
         findings.append(
-            f"{ROUTER}: [router-dup] {dup}가 '항상 로드'와 '작업별 로드' 양쪽에 중복 등재됨"
+            f"{router}: [router-dup] {dup}가 '항상 로드'와 '작업별 로드' 양쪽에 중복 등재됨"
         )
 
 
@@ -278,7 +284,7 @@ def self_test():
           "2026-03-01 09:00 | flag | [rule-skip] 브랜치 규칙 확인 못 함 | .claude/rules/core/git.md\n")
         w("docs/hist.md", "## 변경 이력\n- Q97 반영\n")
         w(
-            ROUTER,
+            ROUTER_CANDIDATES[0],
             "## 항상 로드\n\n- `.claude/rules/core/dup-example.md` — 예시\n\n"
             "## 작업별 로드\n\n"
             "| 작업 | 파일 |\n|---|---|\n"
@@ -302,6 +308,34 @@ def self_test():
         print("self-test OK: 검출 5종 + 오탐 방지 4종 통과")
     finally:
         shutil.rmtree(root, ignore_errors=True)
+
+    # Codex 스타일: .claude/CLAUDE.md 없이 AGENTS.md만 라우터로 존재하는 경우도
+    # check_router_duplicate가 그 파일을 찾아 검사해야 한다 (회귀 방지).
+    root2 = tempfile.mkdtemp()
+    try:
+        os.makedirs(os.path.join(root2, "tasks/questions"))
+        os.makedirs(os.path.join(root2, ".claude/rules/core"))
+
+        def w2(rel, text):
+            with open(os.path.join(root2, rel), "w", encoding="utf-8") as f:
+                f.write(text)
+
+        w2(QUEUE, "# 0. 먼저\n\n# A. 인프라\n")
+        w2(RULE, f"## 재검증 대상 문서 목록\n| `{QUEUE}` | 큐 |\n")
+        w2(
+            "AGENTS.md",
+            "## 항상 로드\n\n- `.claude/rules/core/dup-example.md` — 예시\n\n"
+            "## 작업별 로드\n\n"
+            "| 작업 | 파일 |\n|---|---|\n"
+            "| 예시 | `.claude/rules/core/dup-example.md` |\n",
+        )
+
+        found2 = run(root2)
+        blob2 = "\n".join(found2)
+        assert "AGENTS.md: [router-dup]" in blob2, f"Codex 라우터(AGENTS.md) 미검출: {found2}"
+        print("self-test OK: Codex 라우터(AGENTS.md) 탐지 통과")
+    finally:
+        shutil.rmtree(root2, ignore_errors=True)
 
 
 def main():

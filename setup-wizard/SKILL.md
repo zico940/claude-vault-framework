@@ -21,6 +21,11 @@ description: 사용자가 "/setup-wizard"를 실행하거나 "vault 초기 설�
 4. **역할 분담 필요 여부**: "이 업무에 여러 역할(예: 주문 담당, 재고 담당)이 있고 그것마다 다른 규칙을 적용하고 싶나요?"
    - "아니오"면 5번으로 진행.
    - "예"면 역할 이름을 나열받아 라우터 "작업별 로드" 표에 들어갈 줄(`domain_rows`)과 "절대 규칙"에 들어갈 줄(`domain_absolute_rules`)을 함께 구성한다. 이 스킬은 역할 목록을 강제하지 않는다 — 미리 정해둔 고정 역할 세트를 만들지 않고, 사용자가 부른 이름 그대로 표에 적는다.
+5. **사용 CLI**: "이 vault를 Claude Code에서만 쓰나요, Codex에서도 쓰나요?" — Claude Code만 / Codex만 / 둘 다.
+   답변을 `platform` 인자(`"claude"` / `"codex"` / `"both"`)로 매핑한다. 이 값에 따라 verify-docs
+   재검증 트리거가 `.claude/skills/verify-docs/SKILL.md`(Claude Code)로 배치될지, `AGENTS.md`
+   안내문(Codex)으로 배치될지, 둘 다로 배치될지가 갈린다. check.py 검증 로직 자체는 플랫폼과
+   무관하게 항상 동일하게 동작한다.
 
 ## 실행
 
@@ -38,6 +43,7 @@ created = generate_vault(
     constraints='<3번 답변, 없으면 빈 문자열>',
     domain_rows='<4번에서 구성한 표 줄, 없으면 빈 문자열>',
     domain_absolute_rules='<4번에서 구성한 절대 규칙 줄, 없으면 빈 문자열>',
+    platform='<5번 답변: claude | codex | both>',
 )
 print(f'{len(created)}개 파일 생성 완료')
 "

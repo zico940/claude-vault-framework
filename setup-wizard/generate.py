@@ -24,7 +24,9 @@ def _read_template(rel_path):
         return f.read()
 
 
-def generate_vault(target_dir, domain, constraints, domain_rows="", domain_absolute_rules=""):
+def generate_vault(
+    target_dir, domain, constraints, domain_rows="", domain_absolute_rules="", platform="claude"
+):
     """업종 전용 vault를 target_dir에 생성한다.
 
     Args:
@@ -34,10 +36,15 @@ def generate_vault(target_dir, domain, constraints, domain_rows="", domain_absol
             open-questions.md의 권장안 근거 문구에 들어간다.
         domain_rows: 라우터 "작업별 로드" 표에 추가할 줄(없으면 빈 문자열).
         domain_absolute_rules: 라우터 "절대 규칙"에 추가할 줄(없으면 빈 문자열).
+        platform: "claude" | "codex" | "both". verify-docs 트리거를 어느 CLI 관례로
+            배치할지 결정한다. check.py 로직 자체는 플랫폼 무관, 트리거 안내문의
+            배치 위치/형식만 달라진다.
 
     Returns:
         생성된 파일의 target_dir 기준 상대경로 목록.
     """
+    if platform not in ("claude", "codex", "both"):
+        raise ValueError(f"알 수 없는 platform: {platform!r} (claude/codex/both 중 하나)")
     created = []
 
     # 1. CLAUDE.md (vault 지식관리 규칙)
@@ -62,14 +69,27 @@ def generate_vault(target_dir, domain, constraints, domain_rows="", domain_absol
         _write(target_dir, f".claude/rules/core/{name}", content)
         created.append(f".claude/rules/core/{name}")
 
-    # 4. verify-docs 스킬 이식 (최종 vault 안에서는 .claude/skills/verify-docs/check.py,
-    # SKILL.md 이름으로 배치한다 — 이 저장소 안의 파일명(verify_docs.py 등)과는 무관)
+    # 4. verify-docs 검증기 이식. check.py 로직은 플랫폼 무관이라 항상 같은 위치에
+    # 둔다 — .claude/CLAUDE.md든 AGENTS.md든 check.py가 스스로 찾아서 검사한다.
+    # 트리거(언제 실행할지 안내)만 플랫폼별 관례에 맞춰 다르게 배치한다.
     verify_docs_dst = os.path.join(target_dir, ".claude", "skills", "verify-docs")
     os.makedirs(verify_docs_dst, exist_ok=True)
     shutil.copy(os.path.join(SKILL_ROOT, "verify_docs.py"), os.path.join(verify_docs_dst, "check.py"))
     created.append(".claude/skills/verify-docs/check.py")
-    shutil.copy(os.path.join(SKILL_ROOT, "verify_docs_SKILL.md"), os.path.join(verify_docs_dst, "SKILL.md"))
-    created.append(".claude/skills/verify-docs/SKILL.md")
+
+    if platform in ("claude", "both"):
+        shutil.copy(os.path.join(SKILL_ROOT, "verify_docs_SKILL.md"), os.path.join(verify_docs_dst, "SKILL.md"))
+        created.append(".claude/skills/verify-docs/SKILL.md")
+
+    if platform in ("codex", "both"):
+        agents_section = _read_template("verify_docs_AGENTS.md.template")
+        agents_path = os.path.join(target_dir, "AGENTS.md")
+        if os.path.exists(agents_path):
+            with open(agents_path, "a", encoding="utf-8") as f:
+                f.write("\n" + agents_section)
+        else:
+            _write(target_dir, "AGENTS.md", agents_section)
+        created.append("AGENTS.md")
 
     # 5. tasks/questions/open-questions.md (빈 큐)
     queue = (
